@@ -27,6 +27,23 @@ if (!$doc) {
     exit;
 }
 
+if (!is_published($doc)) {
+    audit_log('view_blocked', 'document', (int) $doc['id'], [
+        'publish_at' => $doc['publish_at'],
+        'token'      => $token,
+    ]);
+    http_response_code(403);
+    render_header('Not yet available');
+    ?>
+    <div class="centered-message">
+        <h1>Not yet available</h1>
+        <p>This document will be available on <?= h($doc['publish_at']) ?>.</p>
+    </div>
+    <?php
+    render_footer();
+    exit;
+}
+
 render_header($doc['title']);
 ?>
 

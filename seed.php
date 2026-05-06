@@ -10,18 +10,23 @@ if (file_exists($dbPath)) {
 $pdo = db();
 $pdo->exec(file_get_contents(__DIR__ . '/schema.sql'));
 
+// Apply migrations on top of the base schema.
+run_migrations($pdo);
+
 $pdo->exec("
     INSERT INTO staff (email, name) VALUES
         ('freddy@folio.example', 'Freddy Folio')
 ");
 
+$slug = make_slug('Welcome Packet');
 $stmt = $pdo->prepare('
-    INSERT INTO documents (title, body, created_by)
-    VALUES (?, ?, 1)
+    INSERT INTO documents (title, body, created_by, slug)
+    VALUES (?, ?, 1, ?)
 ');
 $stmt->execute([
     'Welcome Packet',
     "Welcome to Folio!\n\nThis is the body of your welcome packet.",
+    $slug,
 ]);
 $docId = (int) $pdo->lastInsertId();
 

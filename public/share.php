@@ -4,9 +4,16 @@ require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/layout.php';
 
 $staff = current_staff();
-$docId = (int) ($_GET['doc'] ?? 0);
-$stmt = db()->prepare('SELECT * FROM documents WHERE id = ?');
-$stmt->execute([$docId]);
+
+// Accept slug or numeric ID so links from the admin table work either way.
+$docParam = $_GET['doc'] ?? '';
+if (ctype_digit($docParam)) {
+    $stmt = db()->prepare('SELECT * FROM documents WHERE id = ?');
+    $stmt->execute([(int) $docParam]);
+} else {
+    $stmt = db()->prepare('SELECT * FROM documents WHERE slug = ?');
+    $stmt->execute([$docParam]);
+}
 $doc = $stmt->fetch();
 
 if (!$doc) {
@@ -36,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$doc['id'], $token, $email]);
         $shareId = (int) db()->lastInsertId();
         audit_log('create', 'share', $shareId, [
-            'document_id' => $doc['id'],
+            'document_id'     => $doc['id'],
             'recipient_email' => $email,
         ]);
         $created_token = $token;
@@ -50,6 +57,13 @@ render_header('Share · ' . $doc['title'], $staff);
 
 <h1 class="page-title">Share "<?= h($doc['title']) ?>"</h1>
 <p class="page-subtitle">Generate a one-time link for a recipient.</p>
+
+<?php if (!is_published($doc)): ?>
+    <div class="banner banner-warn">
+        This document is scheduled for <strong><?= h($doc['publish_at']) ?></strong>.
+        Recipients will see a "not yet available" message until then.
+    </div>
+<?php endif ?>
 
 <?php if ($error): ?>
     <div class="banner banner-error"><?= h($error) ?></div>
