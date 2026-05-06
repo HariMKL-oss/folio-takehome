@@ -1,7 +1,7 @@
 <?php
 
-require __DIR__ . '/../lib/bootstrap.php';
-require __DIR__ . '/../lib/layout.php';
+require_once __DIR__ . '/../lib/bootstrap.php';
+require_once __DIR__ . '/../lib/layout.php';
 
 $token = $_GET['token'] ?? '';
 
@@ -21,6 +21,18 @@ if (!$doc) {
     <div class="centered-message">
         <h1>Share link not found</h1>
         <p>The link you used is invalid or has been removed.</p>
+    </div>
+    <?php
+    render_footer();
+    exit;
+}
+
+if (!empty($doc['published_at']) && $doc['published_at'] > date('Y-m-d H:i:s')) {
+    render_header('Not yet available');
+    ?>
+    <div class="centered-message">
+        <h1>Not yet available</h1>
+        <p>This document is scheduled to be published later. Please check back again.</p>
     </div>
     <?php
     render_footer();
